@@ -1,0 +1,196 @@
+/* ===== Page header and shared page pieces ===== */
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.page-header h1 {
+  margin: 0;
+}
+
+.page-intro {
+  max-width: 640px;
+  color: var(--color-text-muted);
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+/* Narrower column for the create and edit pages */
+.form-page {
+  max-width: 760px;
+}
+
+/* ===== Tutor form sections (create and edit pages) ===== */
+.form-section {
+  margin-bottom: 2rem;
+}
+
+.form-section-title {
+  margin: 0 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  font-size: 1.15rem;
+}
+
+/* ===== Home page ===== */
+.hero {
+  padding: 3rem 1.5rem;
+  background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
+  border-radius: var(--radius);
+  color: #ffffff;
+  text-align: center;
+}
+
+.hero h1 {
+  color: #ffffff;
+}
+
+.hero p {
+  max-width: 640px;
+  margin: 0 auto 1.5rem;
+  color: var(--color-primary-soft);
+  font-size: 1.1rem;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+/* The primary button would be invisible on the blue background */
+.hero .btn-primary {
+  background-color: #ffffff;
+  color: var(--color-primary-dark);
+}
+
+.hero .btn-primary:hover {
+  background-color: var(--color-primary-soft);
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.feature-card {
+  padding: 1.25rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.feature-card p {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+/* ===== Tutor directory ===== */
+.toolbar {
+  display: grid;
+  grid-template-columns: 2fr 1fr auto;
+  gap: 1rem;
+  align-items: end;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.toolbar .form-field {
+  margin-bottom: 0;
+}
+
+.results-count {
+  margin-bottom: 1rem;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.tutor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 1.25rem;
+}
+
+/* ===== Tutor details ===== */
+.details-card {
+  padding: 1.5rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.details-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.details-header h1 {
+  margin-bottom: 0.25rem;
+}
+
+.details-avatar {
+  flex-shrink: 0;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.details-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.details-headline {
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* Keeps the line breaks the tutor typed in the biography */
+.details-bio {
+  white-space: pre-line;
+}
+
+.details-timestamps {
+  margin-top: 1.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.details-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+/* ===== Small screens ===== */
+@media (max-width: 700px) {
+  .toolbar {
+    grid-template-columns: 1fr;
+  }
+}
