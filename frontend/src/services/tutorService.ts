@@ -1,3 +1,4 @@
+
 import { ApiError, apiDelete, apiGet, apiPost, apiPut } from "./apiClient";
 import {
   isDepartment,
@@ -7,7 +8,7 @@ import {
 import type { Tutor, TutorFormData, TutorId } from "../types/tutor";
 
 // Backend path for the tutor resource. The base URL comes from apiClient.
-const TUTORS_PATH = "/api/tutors";
+const TUTORS_PATH = "/tutors";
 
 const INVALID_DATA_MESSAGE =
   "The server returned data in an unexpected format.";
@@ -76,32 +77,32 @@ function parseTutorList(data: unknown): Tutor[] {
   return tutors;
 }
 
-// Builds "/api/tutors/<id>", encoding the id so special characters are safe.
+// Builds "/tutors/<id>", encoding the id so special characters are safe.
 function tutorPath(id: TutorId): string {
   return `${TUTORS_PATH}/${encodeURIComponent(String(id))}`;
 }
 
 // ---- The five CRUD operations ----
 
-// READ (list): GET /api/tutors
+// READ (list): GET /tutors
 export async function getTutors(): Promise<Tutor[]> {
   const data = await apiGet(TUTORS_PATH);
   return parseTutorList(data);
 }
 
-// READ (single): GET /api/tutors/{id}
+// READ (single): GET /tutors/{id}
 export async function getTutorById(id: TutorId): Promise<Tutor> {
   const data = await apiGet(tutorPath(id));
   return parseTutor(data);
 }
 
-// CREATE: POST /api/tutors
+// CREATE: POST /tutors
 export async function createTutor(formData: TutorFormData): Promise<Tutor> {
   const data = await apiPost(TUTORS_PATH, formData);
   return parseTutor(data);
 }
 
-// UPDATE: PUT /api/tutors/{id}
+// UPDATE: PUT /tutors/{id}
 export async function updateTutor(
   id: TutorId,
   formData: TutorFormData
@@ -110,7 +111,7 @@ export async function updateTutor(
   return parseTutor(data);
 }
 
-// DELETE: DELETE /api/tutors/{id}
+// DELETE: DELETE /tutors/{id}
 export async function deleteTutor(id: TutorId): Promise<void> {
   await apiDelete(tutorPath(id));
 }
