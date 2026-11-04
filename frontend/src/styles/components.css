@@ -1,0 +1,630 @@
+/* ===== Navbar ===== */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.navbar-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.navbar-brand {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.navbar-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.navbar-link {
+  display: inline-block;
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius);
+  color: var(--color-text);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.navbar-link:hover {
+  background-color: var(--color-primary-soft);
+}
+
+/* React Router's NavLink gives the current page's link this class */
+.navbar-link.active {
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+/* ===== Buttons ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1.1rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
+}
+
+.btn-secondary {
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--color-bg);
+}
+
+.btn-danger {
+  background-color: var(--color-danger);
+  color: #ffffff;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: var(--color-danger-dark);
+}
+
+/* ===== Status boxes: loading, error, empty ===== */
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2.5rem 1rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+.state p {
+  max-width: 480px;
+  color: var(--color-text-muted);
+}
+
+.state-error {
+  background-color: var(--color-danger-soft);
+  border-color: #fecaca;
+}
+
+.state-error h2 {
+  color: var(--color-danger);
+}
+
+.state-error p {
+  color: var(--color-text);
+}
+
+.spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 1rem;
+  border: 4px solid var(--color-primary-soft);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Respect users who prefer less motion */
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}
+
+/* ===== Alerts (success / error messages) ===== */
+.alert {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+}
+
+.alert-success {
+  background-color: var(--color-success-soft);
+  border-color: #86efac;
+  color: var(--color-success);
+}
+
+.alert-error {
+  background-color: var(--color-danger-soft);
+  border-color: #fecaca;
+  color: var(--color-danger);
+}
+
+/* ===== Confirm dialog ===== */
+/* The <dialog> element is hidden by the browser until showModal() is called,
+   so display is intentionally not set here. */
+.confirm-dialog {
+  width: min(90vw, 440px);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  color: var(--color-text);
+}
+
+.confirm-dialog::backdrop {
+  background-color: rgba(15, 23, 42, 0.55);
+}
+
+.confirm-dialog-content {
+  padding: 1.5rem;
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+/* ===== Tutor form ===== */
+.tutor-form {
+  padding: 1.5rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* Remove the default fieldset border and spacing */
+.form-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.form-field {
+  margin-bottom: 1.1rem;
+}
+
+.form-field label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-weight: 600;
+}
+
+.required-mark {
+  color: var(--color-danger);
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  background-color: var(--color-surface);
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius);
+  color: var(--color-text);
+}
+
+.form-input:focus {
+  border-color: var(--color-primary);
+}
+
+.form-input[aria-invalid="true"] {
+  background-color: #fff5f5;
+  border-color: var(--color-danger);
+}
+
+textarea.form-input {
+  min-height: 140px;
+  resize: vertical;
+}
+
+.form-hint {
+  margin: 0.3rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.form-error {
+  margin: 0.3rem 0 0;
+  color: var(--color-danger);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Two fields side by side on wide screens, stacked on narrow ones */
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0 1rem;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+/* ===== Form field extras (FormField component) ===== */
+/* Hint on the left, character counter on the right */
+.form-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.form-meta .form-hint {
+  margin: 0.3rem 0 0;
+}
+
+.form-counter {
+  flex-shrink: 0;
+  margin: 0.3rem 0 0 auto;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+/* ===== Combobox (SearchableSelect and MultiSelect) ===== */
+.combobox {
+  position: relative;
+}
+
+/* Leaves room on the right for the clear button and the arrow */
+.combobox-input {
+  padding-right: 4.25rem;
+  text-overflow: ellipsis;
+}
+
+.combobox-actions {
+  position: absolute;
+  top: 0;
+  right: 0.5rem;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  /* Clicks pass through to the text box, except on the clear button */
+  pointer-events: none;
+}
+
+.combobox-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  color: var(--color-text-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.combobox-clear:hover {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* Small downward arrow drawn with borders */
+.combobox-chevron {
+  width: 0.5rem;
+  height: 0.5rem;
+  margin: 0 0.35rem 0.2rem 0.25rem;
+  border-right: 2px solid var(--color-text-muted);
+  border-bottom: 2px solid var(--color-text-muted);
+  transform: rotate(45deg);
+}
+
+.combobox-listbox {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  z-index: 20;
+  max-height: min(16rem, 50vh);
+  margin: 0;
+  padding: 0.25rem;
+  overflow-y: auto;
+  list-style: none;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.combobox-option {
+  padding: 0.6rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.combobox-option.is-active {
+  background-color: var(--color-primary-soft);
+}
+
+/* The currently selected option in a single-choice list */
+.combobox-option[aria-selected="true"] {
+  box-shadow: inset 3px 0 0 var(--color-primary);
+  color: var(--color-primary-dark);
+  font-weight: 600;
+}
+
+.combobox-empty {
+  margin: 0;
+  padding: 0.75rem;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.combobox-group + .combobox-group {
+  margin-top: 0.25rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.combobox-group-label {
+  padding: 0.4rem 0.75rem 0.2rem;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ===== Selected subject chips (MultiSelect) ===== */
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  max-width: 100%;
+  padding: 0.2rem 0.25rem 0.2rem 0.75rem;
+  background-color: var(--color-primary-soft);
+  border: 1px solid #c7d2fe;
+  border-radius: 999px;
+  color: var(--color-primary-dark);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.chip-label {
+  overflow-wrap: anywhere;
+}
+
+.chip-remove {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  color: var(--color-primary-dark);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.chip-remove:hover {
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+/* ===== Profile picture upload (ImageUpload) ===== */
+.image-upload {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.image-upload-preview {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  padding: 0.25rem;
+  overflow: hidden;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.image-upload-preview img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.image-upload-body {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.image-upload-filename {
+  margin: 0 0 0.5rem;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.image-upload-actions {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* The real file input is hidden visually but remains keyboard-focusable */
+.file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+
+/* Beats ".form-field label" so the label looks like a button */
+.form-field .file-trigger {
+  display: inline-flex;
+  margin-bottom: 0;
+}
+
+/* Shows the focus ring on the visible button when the hidden input is focused */
+.file-input:focus-visible + .file-trigger {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+/* ===== Tutor card ===== */
+.tutor-card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.tutor-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.tutor-card-name {
+  margin: 0 0 0.25rem;
+}
+
+.tutor-avatar {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.tutor-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  background-color: var(--color-primary-soft);
+  border-radius: 999px;
+  color: var(--color-primary-dark);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.tutor-card-headline {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.tutor-card-bio {
+  color: var(--color-text-muted);
+}
+
+.tutor-meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 0.75rem;
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+}
+
+.tutor-meta dt {
+  color: var(--color-text-muted);
+}
+
+.tutor-meta dd {
+  margin: 0;
+  font-weight: 500;
+}
+
+/* margin-top: auto pushes the button to the bottom of the card */
+.tutor-card-footer {
+  margin-top: auto;
+}
+
+/* ===== Small screens ===== */
+@media (max-width: 600px) {
+  .navbar-inner {
+    justify-content: center;
+  }
+
+  /* Larger touch targets for dropdown options on phones */
+  .combobox-option {
+    padding: 0.75rem;
+  }
+}
