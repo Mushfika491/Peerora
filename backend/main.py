@@ -1,3 +1,4 @@
+
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -8,11 +9,16 @@ from peerora.config import get_cors_origins
 from peerora.errors import validation_error_handler
 from peerora.routers import tutors
 
-app = FastAPI(title="FastAPI + React")
+app = FastAPI(
+    title="Peerora API",
+    description="REST API for Peerora - A University Peer Learning and Tutoring Platform",
+    version="1.0.0",
+    docs_url="/api/docs",
+    openapi_url="/api/openapi.json",
+    redoc_url="/api/redoc",
+)
 
-# CORS: lets the browser accept responses from this API when the frontend runs
-# on a different address (for example the Vite server on port 5173).
-# The allowed addresses come from the CORS_ORIGINS environment variable.
+# CORS configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_cors_origins(),
@@ -20,7 +26,6 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Accept"],
 )
-
 
 @app.get("/api/health")
 def health() -> dict[str, str]:
@@ -32,28 +37,15 @@ def hello(name: str = "World") -> dict[str, str]:
     return {"message": f"Hello, {name}!"}
 
 
-# EXERCISE (part 1): uncomment to add POST /api/user, then test it at /docs.
-# from pydantic import BaseModel, EmailStr
-#
-#
-# class User(BaseModel):
-#     id: int
-#     name: str
-#     email: EmailStr  # invalid emails get a 422 response automatically
-#
-#
-# @app.post("/api/user")
-# def create_user(user: User) -> dict[str, str]:
-#     return {"message": f"Hello {user.name} (ID {user.id}), we'll email you at {user.email}."}
-
-
-# Tutor profile management: readable validation messages and the five CRUD routes.
+# Register validation error handler
 app.add_exception_handler(RequestValidationError, validation_error_handler)
+
+# Register tutor profile CRUD routes
 app.include_router(tutors.router)
 
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 
-# dist/ only exists after `npm run build`; in dev the Vite server serves the UI.
+# Serve the frontend when the production build exists.
 if FRONTEND_DIR.is_dir():
     app.frontend("/", directory=FRONTEND_DIR)
