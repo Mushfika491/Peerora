@@ -12,9 +12,16 @@ import { CLIENT_BRAND_HEADER, detectClientBrand } from "./clientBrand";
 // The API base URL. Empty (the default) means "same origin": in production
 // Vercel serves the API under /api, and in development Vite proxies /api to
 // the backend (see vite.config.ts).
-const rawBaseUrl: unknown = import.meta.env.VITE_API_BASE_URL;
-const API_BASE_URL: string =
-  typeof rawBaseUrl === "string" ? rawBaseUrl.trim().replace(/\/+$/, "") : "";
+// Every request path already starts with "/api/", so a trailing "/api" in the
+// setting (e.g. an older "/api" value) is dropped instead of doubling the path.
+export function normalizeApiBaseUrl(raw: unknown): string {
+  if (typeof raw !== "string") {
+    return "";
+  }
+  return raw.trim().replace(/\/+$/, "").replace(/\/api$/, "");
+}
+
+const API_BASE_URL: string = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
 
 // Sent on cookie-authenticated requests (refresh/logout) as CSRF protection.
 export const CSRF_HEADERS = { "X-Requested-With": "peerora" };

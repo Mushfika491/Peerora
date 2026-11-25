@@ -12,11 +12,37 @@
 //   API calls          - same origin (/api), plus VITE_API_BASE_URL if set
 import type { Plugin } from "vite";
 
+// The extra connect-src source needed for VITE_API_BASE_URL, or null when the
+// API is on the site's own origin (already allowed by 'self'):
+//   ""  or a path on this site such as "/api"  -> null (same origin)
+//   "https://api.example.com/..."             -> "https://api.example.com"
+// Anything else (a host without http(s)://, "//host", other protocols) stops
+// the build with a clear message instead of silently widening the policy.
+export function apiConnectSource(apiBaseUrl = ""): string | null {
+  const value = apiBaseUrl.trim();
+  if (value === "" || (value.startsWith("/") && !value.startsWith("//"))) {
+    return null;
+  }
+  let url: URL | null = null;
+  try {
+    url = new URL(value);
+  } catch {
+    url = null;
+  }
+  if (url === null || (url.protocol !== "https:" && url.protocol !== "http:")) {
+    throw new Error(
+      "VITE_API_BASE_URL must be empty (recommended: the API is served on the same origin under /api), " +
+        "a path on this site such as /api, or a full http(s):// address of a separately hosted API."
+    );
+  }
+  return url.origin;
+}
+
 export function buildContentSecurityPolicy(apiBaseUrl = ""): string {
   const connect = ["'self'"];
-  const trimmed = apiBaseUrl.trim();
-  if (trimmed !== "") {
-    connect.push(new URL(trimmed).origin); // a backend on another origin
+  const apiSource = apiConnectSource(apiBaseUrl);
+  if (apiSource !== null) {
+    connect.push(apiSource); // a backend on another origin
   }
   const directives: Record<string, string[]> = {
     "default-src": ["'self'"],
