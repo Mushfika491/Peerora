@@ -1,5 +1,8 @@
 """The tutors table, described as a Python class (a SQLAlchemy model).
 
+user_id links a profile to the tutor account that owns it (NULL for profiles
+created before accounts existed; only admins can manage those).
+
 Every column matches the frontend contract (frontend/src/types/tutor.ts) and
 the limits in constants.py. The Alembic migration creates the same table.
 """
@@ -10,7 +13,7 @@ from decimal import Decimal
 from sqlalchemy import (
     JSON,
     CheckConstraint,
-    DateTime,
+    ForeignKey,
     Numeric,
     String,
     UniqueConstraint,
@@ -35,6 +38,7 @@ from peerora.constants import (
     TUTORING_EXPERIENCES,
 )
 from peerora.database import Base
+from peerora.models.helpers import UtcDateTime
 
 
 def _in_list(column: str, values: tuple[str, ...]) -> str:
@@ -52,6 +56,8 @@ class Tutor(Base):
     # check uses PostgreSQL-only functions, so it lives in the migration only.)
     __table_args__ = (
         UniqueConstraint("student_id", name="uq_tutors_student_id"),
+        # One tutor profile per user account.
+        UniqueConstraint("user_id", name="uq_tutors_user_id"),
         CheckConstraint(
             f"length(full_name) >= {FULL_NAME_MIN_LENGTH} "
             f"AND length(full_name) <= {FULL_NAME_MAX_LENGTH}",
@@ -94,6 +100,9 @@ class Tutor(Base):
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL", name="fk_tutors_user_id_users")
+    )
     full_name: Mapped[str] = mapped_column(String(FULL_NAME_MAX_LENGTH))
     # Text, not a number, so leading zeros are kept. Unique and case-sensitive.
     student_id: Mapped[str] = mapped_column(String(STUDENT_ID_LENGTH))
@@ -111,8 +120,8 @@ class Tutor(Base):
         String(PROFILE_IMAGE_URL_MAX_LENGTH)
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+        UtcDateTime, server_default=func.now()
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+        UtcDateTime, server_default=func.now(), onupdate=func.now()
     )

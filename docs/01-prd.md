@@ -1,5 +1,7 @@
 # Product Requirements Document (PRD) — Peerora
 
+> **Status note (final release):** this document describes the original MVP/Beta plan. The implemented system, including the changes from this plan (separate account type and security role, study groups and records instead of bookings and materials, `/api` instead of `/api/v1`), is documented in [`FINAL_REPORT.md`](../FINAL_REPORT.md).
+
 | Field        | Value                                                                                                |
 |:-------------|:-----------------------------------------------------------------------------------------------------|
 | Product      | Peerora                                                                                              |

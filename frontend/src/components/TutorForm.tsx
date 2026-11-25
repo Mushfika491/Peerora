@@ -18,6 +18,7 @@ import {
   BIO_MAX_LENGTH,
   EMPTY_TUTOR_FORM_VALUES,
   HEADLINE_MAX_LENGTH,
+  MAX_IMAGE_SIZE_MB,
   countCharacters,
   hasErrors,
   toTutorFormData,
@@ -259,7 +260,7 @@ function TutorForm({
           <ImageUpload
             id="profile_image_file"
             label="Profile picture (optional)"
-            hint="JPG, JPEG, PNG or WebP, up to 2 MB. Picture upload is not connected yet, so a profile cannot be saved with a new picture for now."
+            hint={`JPG, JPEG, PNG or WebP, up to ${MAX_IMAGE_SIZE_MB} MB. Picture upload is not connected yet, so a profile cannot be saved with a new picture for now.`}
             file={values.profile_image_file}
             existingUrl={values.profile_image_url}
             onFileChange={(file) => updateField("profile_image_file", file)}

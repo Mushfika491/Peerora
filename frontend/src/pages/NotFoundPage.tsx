@@ -4,6 +4,7 @@ function NotFoundPage() {
   return (
     <main className="container page">
       <EmptyState
+        headingLevel="h1"
         title="Page not found"
         message="The page you are looking for does not exist."
         actionLabel="Go to the home page"

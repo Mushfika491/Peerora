@@ -1,64 +1,12 @@
-/* ===== Navbar ===== */
-.navbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background-color: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.navbar-inner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem 1.5rem;
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
-}
-
-.navbar-brand {
-  font-size: 1.4rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--color-primary);
-  text-decoration: none;
-}
-
-.navbar-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.navbar-link {
-  display: inline-block;
-  padding: 0.45rem 0.9rem;
-  border-radius: var(--radius);
-  color: var(--color-text);
-  font-weight: 500;
-  text-decoration: none;
-}
-
-.navbar-link:hover {
-  background-color: var(--color-primary-soft);
-}
-
-/* React Router's NavLink gives the current page's link this class */
-.navbar-link.active {
-  background-color: var(--color-primary);
-  color: #ffffff;
-}
-
 /* ===== Buttons ===== */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.4rem;
   padding: 0.6rem 1.1rem;
+  font-size: 0.95rem;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   border: 1px solid transparent;
   border-radius: var(--radius);
   font-weight: 600;
@@ -100,6 +48,24 @@
   background-color: var(--color-danger-dark);
 }
 
+.btn-ghost {
+  background-color: transparent;
+  color: var(--color-text);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background-color: var(--color-surface-muted);
+}
+
+.btn-sm {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+.btn-block {
+  width: 100%;
+}
+
 /* ===== Status boxes: loading, error, empty ===== */
 .state {
   display: flex;
@@ -110,6 +76,11 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   text-align: center;
+}
+
+/* A full-page status box (e.g. 404) uses h1 but keeps the h2 size. */
+.state h1 {
+  font-size: clamp(1.25rem, 3vw, 1.6rem);
 }
 
 .state p {
@@ -236,7 +207,7 @@
   width: 100%;
   padding: 0.6rem 0.75rem;
   background-color: var(--color-surface);
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--color-border-strong);
   border-radius: var(--radius);
   color: var(--color-text);
 }
@@ -532,7 +503,7 @@ textarea.form-input {
 
 /* Shows the focus ring on the visible button when the hidden input is focused */
 .file-input:focus-visible + .file-trigger {
-  outline: 3px solid #93c5fd;
+  outline: 3px solid #a5b4fc;
   outline-offset: 2px;
 }
 
@@ -619,12 +590,58 @@ textarea.form-input {
 
 /* ===== Small screens ===== */
 @media (max-width: 600px) {
-  .navbar-inner {
-    justify-content: center;
-  }
-
   /* Larger touch targets for dropdown options on phones */
   .combobox-option {
     padding: 0.75rem;
   }
+}
+/* ===== Password input with show/hide button ===== */
+.password-input {
+  position: relative;
+}
+
+/* Room on the right for the eye button, so text never runs under it */
+.password-input .form-input {
+  padding-right: 2.75rem;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.password-toggle:hover:not(:disabled) {
+  background-color: var(--color-surface-muted);
+  color: var(--color-text);
+}
+
+.password-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* "Forgot password?" sits on the same line as the password label */
+.label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.label-row a {
+  font-size: 0.875rem;
+  font-weight: 500;
 }

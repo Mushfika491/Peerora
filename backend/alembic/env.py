@@ -4,7 +4,7 @@ from logging.config import fileConfig
 
 from alembic import context
 
-from peerora import models  # noqa: F401  (importing it registers the Tutor table)
+from peerora import models  # noqa: F401  (importing it registers every table)
 from peerora.database import Base, get_engine
 
 config = context.config

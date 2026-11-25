@@ -51,14 +51,17 @@ export function isKnownSubject(value: unknown): value is string {
 
 // ---- Data model ----
 
-// The id may be a number (database integer) or a string (for example a UUID).
-export type TutorId = number | string;
+// The database id of a tutor profile.
+export type TutorId = number;
 
 // The complete tutor object, exactly as returned by the backend.
 export interface Tutor {
   id: TutorId;
+  user_id: number | null; // the owning account (null for legacy profiles)
   full_name: string;
-  student_id: string; // kept as text to preserve leading zeros
+  // Kept as text to preserve leading zeros. Private: only present for the
+  // profile owner and administrators.
+  student_id?: string;
   department: Department;
   semester: number; // 1 to 24
   cgpa: number; // 0.00 to 4.00
@@ -75,4 +78,7 @@ export interface Tutor {
 
 // The data the frontend sends when creating or updating a tutor. The backend
 // generates id, created_at and updated_at itself.
-export type TutorFormData = Omit<Tutor, "id" | "created_at" | "updated_at">;
+export type TutorFormData = Omit<
+  Tutor,
+  "id" | "user_id" | "student_id" | "created_at" | "updated_at"
+> & { student_id: string };
