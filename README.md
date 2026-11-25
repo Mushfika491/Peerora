@@ -63,10 +63,11 @@ See [`FINAL_REPORT.md`](FINAL_REPORT.md) for the full PRD/SRS/TDD, database desi
 
 | Part | Status |
 |---|---|
-| All features, authentication, RBAC, groups, admin dashboard | ✅ Complete and tested **locally** (SQLite) |
+| All features, authentication, RBAC, groups, admin dashboard | ✅ Complete; tested end to end on a local frontend and backend connected to the Supabase PostgreSQL database (see [`docs/PHASE3_E2E_TEST_REPORT.md`](docs/PHASE3_E2E_TEST_REPORT.md)) |
 | Backend tests / frontend tests / type-check / build | ✅ Passing locally (see [Tests](#tests)) |
-| Supabase migrations 0002–0006 | ⏳ Not applied yet (needs the owner's approval) |
-| Vercel deployment and production demo accounts | ⏳ Not done yet (needs the owner's approval) |
+| Supabase migrations 0002–0008 | ✅ Applied to the Supabase database (with backups taken first) |
+| Demo accounts | ✅ Created in the Supabase database (see [Demo accounts](#demo-accounts)) |
+| Vercel deployment | ⏳ Not done yet (needs the owner's approval) |
 
 ## Group permissions
 
@@ -102,7 +103,7 @@ Names only. Never commit real values. Copy `backend/.env.example` to `backend/.e
 
 | Variable | Where | Purpose |
 |---|---|---|
-| `DATABASE_URL` | backend | Supabase PostgreSQL connection string (transaction pooler on Vercel) |
+| `DATABASE_URL` | backend | Supabase PostgreSQL connection string, for local development and production (session pooler locally, transaction pooler on Vercel). Private: see [Database](#database) |
 | `JWT_SECRET_KEY` | backend | Signs access tokens (≥ 32 random characters) |
 | `PASSWORD_PEPPER` | backend | Server-side password pepper (≥ 16 characters; keep a private copy) |
 | `ACCESS_TOKEN_MINUTES` | backend | Access-token lifetime, at most 15 (default 15) |
@@ -114,6 +115,7 @@ Names only. Never commit real values. Copy `backend/.env.example` to `backend/.e
 | `PUBLIC_APP_URL` | backend | Frontend address used in reset links, e.g. `https://your-app.vercel.app` (required in production) |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_STARTTLS`, `SMTP_SSL`, `EMAIL_FROM` | backend | SMTP provider settings for `EMAIL_BACKEND=smtp` (`SMTP_PASSWORD` is a secret) |
 | `EMAIL_OUTBOX_DIR` | backend | Where `outbox` writes `.eml` files (default `backend/dev-outbox/`, git-ignored) |
+| `EMAIL_OUTBOX_ALLOW_REMOTE_DB` | backend | Default `false`: `outbox` is refused against the Supabase database, so local runs cannot create real reset tokens by accident. Set `true` only on purpose for a local reset test; never on Vercel |
 | `VITE_API_BASE_URL` | frontend | **Leave empty / unset** (same origin). Set it only to use a backend on another origin; the value must not end in `/api`. |
 
 Rate limits (`LOGIN_*`, `MAX_SIGNUPS_PER_IP`, `REFRESH_REUSE_GRACE_SECONDS`) are constants in `backend/peerora/constants.py`, not environment variables.
@@ -127,7 +129,7 @@ cd backend
 python3 -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt   # production deps + pytest
-cp .env.example .env               # then fill in DATABASE_URL, JWT_SECRET_KEY, PASSWORD_PEPPER
+cp .env.example .env               # then fill in DATABASE_URL (Supabase), JWT_SECRET_KEY, PASSWORD_PEPPER
 fastapi dev main.py                # http://localhost:8000/api/docs
 ```
 
@@ -139,15 +141,17 @@ npm install
 npm run dev                        # http://localhost:5173 (Vite proxies /api to :8000)
 ```
 
-### Local development database (SQLite, no Supabase)
+## Database
 
-For local testing you can use a throwaway SQLite file instead of Supabase. In `backend/.env`, set `DATABASE_URL=sqlite:///./peerora-dev.db` and `COOKIE_SECURE=false`. Then run:
+Peerora uses the existing **Supabase PostgreSQL** project as its database, both for local development and in production.
 
-```bash
-DEV_DEMO_PASSWORD='<choose one>' python -m scripts.dev_setup   # refuses to run unless DATABASE_URL is SQLite
-```
-
-This creates the tables, stamps the database at the newest migration, and seeds the demo accounts and the demo group. To apply a new migration to an existing local database, run `alembic upgrade head`.
+- `DATABASE_URL` is private. Set it only through environment variables that stay out of Git:
+  - **Locally:** in `backend/.env`, which Git ignores, or as a variable in your shell. Real environment variables take priority over `backend/.env`.
+  - **On Vercel:** under Settings → Environment Variables.
+- Never commit a connection string, and never put real values in `backend/.env.example` (it holds placeholders only).
+- Locally, use the Supabase **session pooler** (port 5432); on Vercel, use the **transaction pooler** (port 6543). Keep `COOKIE_SECURE=false` locally, because the dev servers use plain `http://localhost`.
+- A local backend works on the **real** data, so anything you do in the app changes it. Use the demo accounts for testing.
+- Schema changes go through Alembic only; see [Database migrations](#database-migrations).
 
 ## Database migrations
 
@@ -155,7 +159,7 @@ Migrations are additive and keep all existing data:
 - `0003` only adds a nullable `tutors.user_id` column.
 - `0006` adds the three member-permission columns and fills them from the existing roles: owner and editor get all three, viewer gets none.
 
-Every migration has a downgrade, and the migrations run on PostgreSQL and on SQLite.
+Every migration has a downgrade. `alembic upgrade head` changes the database that `DATABASE_URL` points at, which is the Supabase database, so take a backup first and apply migrations only with the owner's approval.
 
 ```bash
 cd backend
@@ -168,7 +172,7 @@ Rehearse on a disposable PostgreSQL database (`DATABASE_URL` pointing at it) bef
 
 ## Admin accounts and demo data
 
-Admins cannot sign up. Create them with the bootstrap script. Passwords are typed at a hidden prompt and never printed:
+Admins cannot sign up. Create them with the bootstrap script. Passwords are typed at a hidden prompt and never printed. These scripts write to the database in `DATABASE_URL` (Supabase), so run them only when you mean to:
 
 ```bash
 cd backend
@@ -235,7 +239,7 @@ Interactive OpenAPI docs: `/api/docs` (Swagger UI) and `/api/redoc`.
 - **Signup** is limited to 10 new accounts per IP address per hour.
 - **Refresh tokens** rotate on every use. Presenting an old token again revokes the whole session, unless it happens within 10 seconds of the rotation: that is what two tabs refreshing at once, or a retried request, look like. Browser tabs also take turns refreshing (Web Locks API).
 - **Suspended accounts.** The API marks "account suspended" 403 responses with `X-Error-Code: account_suspended`. The frontend signs the user out only for those, never for ordinary permission errors.
-- **Timestamps** are stored in UTC and always sent by the API with an explicit offset (`...Z`), on PostgreSQL and on SQLite alike (`UtcDateTime` column type in `backend/peerora/models/helpers.py`). The browser shows them in the viewer's own timezone (UTC+6 in Bangladesh). Audit date filters use the viewer's local day boundaries. CSV exports use UTC (`created_at_utc`).
+- **Timestamps** are stored in UTC and always sent by the API with an explicit offset (`...Z`), on PostgreSQL and in the in-memory test database alike (`UtcDateTime` column type in `backend/peerora/models/helpers.py`). The browser shows them in the viewer's own timezone (UTC+6 in Bangladesh). Audit date filters use the viewer's local day boundaries. CSV exports use UTC (`created_at_utc`).
 - **Browser in the activity log.** Brave sends Chrome's exact User-Agent. The backend recognises Brave from the browser's `Sec-CH-UA` client hint (sent over HTTPS and on localhost) or from a frontend `navigator.brave` check, and stores a `Brave` token with the user agent. Other Chromium browsers are never labelled Brave. Brave sessions recorded before this change still show as Chrome.
 - **Content-Security-Policy.**
   - API responses: `default-src 'none'`. The interactive docs pages are excluded because they load from a CDN.
