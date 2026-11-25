@@ -1,13 +1,18 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
+import { useToast } from "../components/Toast";
 import TutorForm from "../components/TutorForm";
 import { uploadProfileImage } from "../services/imageService";
 import { createTutor } from "../services/tutorService";
 import type { TutorFormData } from "../types/tutor";
 import { getErrorMessage } from "../utils/messages";
+import { EMPTY_TUTOR_FORM_VALUES } from "../utils/validation";
 
 function CreateTutorPage() {
   const navigate = useNavigate();
+  const { user, setUser } = useAuth();
+  const toast = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -29,9 +34,11 @@ function CreateTutorPage() {
         profile_image_url: profileImageUrl,
       });
 
-      navigate(`/tutors/${encodeURIComponent(String(createdTutor.id))}`, {
-        state: { successMessage: "Tutor profile created successfully." },
-      });
+      if (user !== null) {
+        setUser({ ...user, has_tutor_profile: true });
+      }
+      toast.success("Tutor profile created successfully.");
+      navigate(`/tutors/${createdTutor.id}`);
     } catch (error) {
       setSubmitError(getErrorMessage(error));
       setIsSubmitting(false);
@@ -40,8 +47,13 @@ function CreateTutorPage() {
     }
   }
 
+  // One profile per tutor account: send tutors who already have one to it.
+  if (user?.has_tutor_profile && !isSubmitting) {
+    return <Navigate to="/tutor-profile" replace />;
+  }
+
   return (
-    <main className="container page form-page">
+    <div className="form-page">
       <h1>Create Tutor Profile</h1>
       <p className="page-intro">
         Fill in your details to create a tutor profile. Fields marked with * are
@@ -49,13 +61,14 @@ function CreateTutorPage() {
       </p>
 
       <TutorForm
+        initialValues={{ ...EMPTY_TUTOR_FORM_VALUES, full_name: user?.full_name ?? "" }}
         submitLabel="Create profile"
         isSubmitting={isSubmitting}
         submitError={submitError}
-        cancelTo="/tutors"
+        cancelTo="/dashboard"
         onSubmit={handleSubmit}
       />
-    </main>
+    </div>
   );
 }
 

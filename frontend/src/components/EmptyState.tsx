@@ -5,12 +5,15 @@ interface EmptyStateProps {
   message: string;
   actionLabel?: string;
   actionTo?: string;
+  // "h1" when the message is the whole page (e.g. a 404), so the page still has a main heading.
+  headingLevel?: "h1" | "h2";
 }
 
-function EmptyState({ title, message, actionLabel, actionTo }: EmptyStateProps) {
+function EmptyState({ title, message, actionLabel, actionTo, headingLevel = "h2" }: EmptyStateProps) {
+  const Heading = headingLevel;
   return (
     <div className="state">
-      <h2>{title}</h2>
+      <Heading>{title}</Heading>
       <p>{message}</p>
       {actionLabel !== undefined && actionTo !== undefined && (
         <Link to={actionTo} className="btn btn-primary">

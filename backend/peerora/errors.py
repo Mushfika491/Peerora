@@ -6,6 +6,7 @@ This handler keeps FastAPI's response shape, {"detail": [{"msg": ...}]}, but
 writes a clear message that names the field.
 """
 
+import logging
 from typing import Any
 
 from fastapi import Request
@@ -13,6 +14,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from peerora.constants import STUDENT_ID_LENGTH
+
+logger = logging.getLogger("peerora")
 
 FIELD_LABELS: dict[str, str] = {
     "full_name": "Full name",
@@ -28,6 +31,26 @@ FIELD_LABELS: dict[str, str] = {
     "tutoring_experience": "Previous tutoring experience",
     "profile_image_url": "Profile picture URL",
     "tutor_id": "Tutor id",
+    # Accounts, groups and records
+    "email": "Email",
+    "password": "Password",
+    "new_password": "New password",
+    "current_password": "Current password",
+    "account_type": "Account type",
+    "name": "Group name",
+    "description": "Description",
+    "subject": "Subject",
+    "group_role": "Group role",
+    "title": "Title",
+    "content": "Details",
+    "status": "Status",
+    "due_date": "Due date",
+    "assigned_to_id": "Assignee",
+    "reason": "Reason",
+    "role": "Role",
+    "user_ids": "Selected users",
+    "ids": "Selected items",
+    "token": "Reset link",
 }
 
 # Same wording as the frontend validation messages.
@@ -91,6 +114,12 @@ def _describe(field: str, error: dict[str, Any]) -> str:
         if field == "hourly_rate":
             return "Hourly rate is too large (the maximum is 9999999999.99 BDT)."
         return RANGE_MESSAGES.get(field, f"{label} is too large.")
+    if field == "token" and error_type in ("string_pattern_mismatch", "string_too_short", "string_too_long"):
+        return "This password-reset link is invalid or has expired. Please request a new one."
+    if error_type == "literal_error":
+        return f"{label} must be one of: {context.get('expected', 'the allowed values')}."
+    if error_type == "value_error" and field == "email":
+        return "Enter a valid email address."
     if error_type == "value_error":
         text = message.removeprefix("Value error, ").rstrip(".")
         return f"{label} {text}."
@@ -114,3 +143,12 @@ async def validation_error_handler(
             }
         )
     return JSONResponse(status_code=422, content={"detail": details})
+
+
+async def unhandled_error_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Any unexpected error: log it on the server, return a generic message.
+    The client never sees a stack trace or internal details."""
+    logger.exception("Unhandled error on %s %s", request.method, request.url.path)
+    return JSONResponse(
+        status_code=500, content={"detail": "An unexpected error occurred. Please try again later."}
+    )

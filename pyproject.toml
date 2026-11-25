@@ -1,7 +1,26 @@
 [project]
-name = "fastapi-react-template"
-version = "0.1.0"
-requires-python = ">=3.10"
+name = "peerora"
+version = "2.0.0"
+description = "Peerora - a peer learning and tutoring platform (FastAPI backend + React frontend)"
+readme = "README.md"
+# The backend uses enum.StrEnum, which was added in Python 3.11.
+requires-python = ">=3.11"
+# The deployed backend installs backend/requirements.txt; this list mirrors it.
 dependencies = [
-    "fastapi[standard]>=0.141.1",
+    "fastapi[standard]==0.165.0",
+    "sqlalchemy==2.1.9",
+    "psycopg[binary]==3.3.9",
+    "alembic==1.20.1",
+    "PyJWT==2.15.1",
+    "argon2-cffi==25.1.0",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.2.0",
+    "pytest-cov==7.1.0",
+]
+
+[tool.pytest.ini_options]
+# Run from the backend folder:  python -m pytest
+testpaths = ["backend/tests"]

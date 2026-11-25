@@ -1,5 +1,7 @@
 # Technical Design Document (TDD) — Peerora
 
+> **Status note (final release):** this document describes the original MVP/Beta plan. The implemented system, including the changes from this plan (separate account type and security role, study groups and records instead of bookings and materials, `/api` instead of `/api/v1`), is documented in [`FINAL_REPORT.md`](../FINAL_REPORT.md).
+
 | Field | Value |
 |---|---|
 | Product | Peerora |
@@ -33,8 +35,9 @@ Sections and tables are marked **MVP** or **Beta**. Build the MVP parts for the 
 | API | FastAPI | Request validation, type hints, and automatic OpenAPI docs | MVP |
 | Validation / schemas | Pydantic | Defines and validates API request and response bodies | MVP |
 | ORM | SQLModel or SQLAlchemy | Maps Python models to relational database tables | MVP |
-| Database (local) | SQLite | Simple local setup for course development | MVP |
-| Database (deployment) | PostgreSQL | Suitable relational database for the deployed application | Beta |
+| Database (local development) | Supabase PostgreSQL: the existing project, through the Session pooler (port 5432) | One database engine and one schema everywhere; no separate local application database | MVP |
+| Database (deployment) | Supabase PostgreSQL: the same project, through the Transaction pooler (port 6543) on Vercel | Suitable relational database for the deployed application | Beta |
+| Database (automated tests) | SQLite (in memory, or a temporary file), created fresh for each test | Isolated, fast tests that never touch Supabase; not the application database | MVP |
 | API client | Fetch API in a shared TypeScript service module | Keeps frontend requests consistent and easy to update | MVP |
 | File handling | Metadata and file reference; local upload only if configured | Keeps material sharing small and avoids storing file bytes in database rows | MVP |
 | Authentication | JWT access token or equivalent secure session design | Supports authenticated API requests | Beta |
@@ -101,7 +104,7 @@ peerora/
     app/
       main.py                 # FastAPI application and router registration
       config.py               # Environment-based configuration
-      database.py             # Engine, session dependency, local database setup
+      database.py             # Engine and session dependency for Supabase PostgreSQL
       core/
         security.py           # Beta: password hashing and token helpers
         permissions.py        # Beta: role and ownership dependencies
@@ -451,9 +454,13 @@ Do not return stack traces, SQL statements, credentials, password hashes, or pri
 ## 7. Database access
 
 - `database.py` creates the database engine and provides a request-scoped session dependency.
-- Local development may use SQLite to reduce setup.
-- The deployed Beta should use a persistent database such as PostgreSQL.
-- MVP tables may be created during local startup. If schema changes become frequent, use Alembic migrations for the Beta.
+- Peerora uses **Supabase PostgreSQL** as its application database, both for local development and in production. Local development connects to the existing Supabase project through `DATABASE_URL`; there is no separate local application database.
+- Connection pooler:
+  - **Local development:** Supabase **Session pooler**, port **5432**.
+  - **Vercel production:** Supabase **Transaction pooler**, port **6543**. Prepared statements are turned off, so the same code works with both pooler modes.
+- **Warning:** a local backend works on the **real, shared** Supabase data. Signing up, editing, deleting, password resets and admin actions done locally change that data for everyone. Test with the demo accounts and take care with destructive actions.
+- Tables are never created at application startup. Every schema change is made through Alembic migrations, after a backup and with the owner's approval.
+- Automated tests are isolated from the application database: each test runs on its own fresh SQLite test database and never connects to Supabase (see section 12).
 - Use ORM queries or parameterized SQL; do not construct SQL by concatenating untrusted input.
 - Database credentials must be read from environment variables.
 - Material file contents should be stored in configured file storage, not in the relational database. The database stores metadata and a safe file identifier or reference.
@@ -463,7 +470,7 @@ Do not return stack traces, SQL statements, credentials, password hashes, or pri
 
 | Variable | Purpose | Release |
 |---|---|---|
-| `DATABASE_URL` | Database connection string; local SQLite may be the default | MVP |
+| `DATABASE_URL` | Supabase PostgreSQL connection string (Session pooler locally, Transaction pooler on Vercel). Private: set in `backend/.env` (ignored by Git) or the shell locally, and in Vercel environment variables in production | MVP |
 | `APP_ENV` | `development` or `production` mode | MVP |
 | `JWT_SECRET` | Secret for signing access tokens if JWT is selected | Beta |
 | `ACCESS_TOKEN_MINUTES` | Access-token lifetime if JWT is selected | Beta |
@@ -557,6 +564,8 @@ This is a design sketch; `get_current_user` and `user_can_tutor` must be impleme
 | Booking conflict tests | Overlapping confirmed bookings for one tutor are rejected | Beta |
 | Material tests | Invalid file type/size is rejected; unauthorized deletion is denied | Beta |
 | Deployment smoke tests | Health endpoint and core user journey work in the deployed environment | Beta |
+
+Automated backend tests run the real FastAPI app on a fresh **in-memory SQLite** database for each test (a few configuration tests use a temporary SQLite file instead), so they never read or change Supabase data. This SQLite database exists only for test isolation; the application itself always uses Supabase PostgreSQL.
 
 Minimum MVP manual test path:
 1. Start the backend and frontend locally.

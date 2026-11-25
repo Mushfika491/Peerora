@@ -16,6 +16,7 @@ interface FormFieldProps {
   hint?: string; // helper text shown below the control
   error?: string; // validation message; the field is marked invalid when present
   counter?: string; // e.g. "120 / 500", shown at the right of the helper text
+  labelAction?: ReactNode; // e.g. a "Forgot password?" link on the label's row
   children: (control: FieldControlProps) => ReactNode;
 }
 
@@ -26,6 +27,7 @@ function FormField({
   hint,
   error,
   counter,
+  labelAction,
   children,
 }: FormFieldProps) {
   const errorId = `${id}-error`;
@@ -53,8 +55,8 @@ function FormField({
     "aria-required": required ? true : undefined,
   };
 
-  return (
-    <div className="form-field">
+  function renderLabel() {
+    return (
       <label htmlFor={id}>
         {label}
         {required && (
@@ -64,6 +66,19 @@ function FormField({
           </span>
         )}
       </label>
+    );
+  }
+
+  return (
+    <div className="form-field">
+      {labelAction !== undefined ? (
+        <div className="label-row">
+          {renderLabel()}
+          {labelAction}
+        </div>
+      ) : (
+        renderLabel()
+      )}
 
       {children(control)}
 

@@ -1,177 +1,144 @@
-import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+// Public tutor directory. Search, filters and pagination run on the server
+// (GET /api/tutors?q=&subject=&department=&teaching_mode=&limit=&offset=) and
+// are kept in the URL, so a filtered list can be bookmarked or shared.
+import { useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
 import EmptyState from "../components/EmptyState";
 import ErrorState from "../components/ErrorState";
 import LoadingState from "../components/LoadingState";
+import Pagination from "../components/Pagination";
 import TutorCard from "../components/TutorCard";
-import { getTutors } from "../services/tutorService";
-import type { Tutor } from "../types/tutor";
-import { getErrorMessage, getSuccessMessage } from "../utils/messages";
+import { ALL_SUBJECTS, DEPARTMENTS, TEACHING_MODE_OPTIONS } from "../constants/tutorOptions";
+import { useAsync } from "../hooks/useAsync";
+import { searchTutors } from "../services/tutorService";
 
-type LoadStatus = "loading" | "success" | "error";
+const PAGE_SIZE = 12;
+const SORTED_SUBJECTS = [...ALL_SUBJECTS].sort((a, b) => a.localeCompare(b));
 
 function TutorDirectoryPage() {
-  // A success message may arrive from another page (e.g. after deleting a profile).
-  const location = useLocation();
-  const successMessage = getSuccessMessage(location.state);
+  const { user } = useAuth();
+  const [params, setParams] = useSearchParams();
+  const filters = {
+    q: params.get("q") ?? "",
+    subject: params.get("subject") ?? "",
+    department: params.get("department") ?? "",
+    teaching_mode: params.get("teaching_mode") ?? "",
+  };
+  const page = Math.max(1, Number(params.get("page") ?? "1") || 1);
+  const [searchText, setSearchText] = useState(filters.q);
 
-  const [tutors, setTutors] = useState<Tutor[]>([]);
-  const [status, setStatus] = useState<LoadStatus>("loading");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [reloadCount, setReloadCount] = useState(0); // changing it reloads the data
-  const [searchText, setSearchText] = useState("");
-  const [selectedSubject, setSelectedSubject] = useState("");
+  const { state, reload } = useAsync(
+    () =>
+      searchTutors({
+        ...Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== "")),
+        limit: PAGE_SIZE,
+        offset: (page - 1) * PAGE_SIZE,
+      }),
+    [params.toString()]
+  );
 
-  // Load the tutors when the page opens, and again whenever "Try again" is clicked.
-  useEffect(() => {
-    // Prevents updating state if the page was left before the request finished.
-    let ignore = false;
+  function setFilter(key: string, value: string) {
+    const next = new URLSearchParams(params);
+    if (value === "") next.delete(key);
+    else next.set(key, value);
+    if (key !== "page") next.delete("page");
+    setParams(next);
+  }
 
-    async function loadTutors() {
-      setStatus("loading");
-      setErrorMessage("");
-
-      try {
-        const data = await getTutors();
-        if (!ignore) {
-          setTutors(data);
-          setStatus("success");
-        }
-      } catch (error) {
-        if (!ignore) {
-          setErrorMessage(getErrorMessage(error));
-          setStatus("error");
-        }
-      }
-    }
-
-    loadTutors();
-
-    return () => {
-      ignore = true;
-    };
-  }, [reloadCount]);
-
-  // Unique, sorted subjects taken from all tutors, for the filter dropdown.
-  const subjects = Array.from(
-    new Set(tutors.flatMap((tutor) => tutor.subjects))
-  ).sort((a, b) => a.localeCompare(b));
-
-  // Apply the subject filter and the search text.
-  const query = searchText.trim().toLowerCase();
-  const filteredTutors = tutors.filter((tutor) => {
-    // A tutor matches when ANY of their subjects equals the selected one.
-    const matchesSubject =
-      selectedSubject === "" || tutor.subjects.includes(selectedSubject);
-
-    const matchesSearch =
-      query === "" ||
-      [tutor.full_name, tutor.headline, tutor.department, ...tutor.subjects].some(
-        (text) => text.toLowerCase().includes(query)
-      );
-
-    return matchesSubject && matchesSearch;
-  });
-
-  const hasActiveFilters = searchText !== "" || selectedSubject !== "";
+  const hasActiveFilters = Object.values(filters).some((value) => value !== "");
 
   function clearFilters() {
     setSearchText("");
-    setSelectedSubject("");
+    setParams(new URLSearchParams());
   }
+
+  const canCreateProfile = user !== null && user.account_type === "tutor" && !user.has_tutor_profile;
 
   return (
     <main className="container page">
       <div className="page-header">
-        <h1>Find Tutors</h1>
-        <Link to="/tutors/new" className="btn btn-primary">
-          Create Tutor Profile
-        </Link>
+        <div>
+          <h1>Find Tutors</h1>
+          <p className="page-intro" style={{ margin: 0 }}>
+            Browse peer tutors by subject, department and teaching mode.
+          </p>
+        </div>
+        {canCreateProfile && (
+          <Link to="/tutors/new" className="btn btn-primary">Create Tutor Profile</Link>
+        )}
       </div>
 
-      {successMessage !== null && (
-        <div className="alert alert-success" role="status">
-          {successMessage}
+      <form className="filter-bar" onSubmit={(event) => { event.preventDefault(); setFilter("q", searchText.trim()); }}>
+        <div className="form-field grow">
+          <label htmlFor="tutor-search">Search</label>
+          <input id="tutor-search" type="search" className="form-input"
+            placeholder="Name, subject, department or headline"
+            value={searchText} onChange={(event) => setSearchText(event.target.value)} />
         </div>
+        <div className="form-field">
+          <label htmlFor="subject-filter">Subject</label>
+          <select id="subject-filter" className="form-input" value={filters.subject}
+            onChange={(event) => setFilter("subject", event.target.value)}>
+            <option value="">All subjects</option>
+            {SORTED_SUBJECTS.map((subject) => (
+              <option key={subject} value={subject}>{subject}</option>
+            ))}
+          </select>
+        </div>
+        <div className="form-field">
+          <label htmlFor="department-filter">Department</label>
+          <select id="department-filter" className="form-input" value={filters.department}
+            onChange={(event) => setFilter("department", event.target.value)}>
+            <option value="">All departments</option>
+            {DEPARTMENTS.map((department) => (
+              <option key={department} value={department}>{department}</option>
+            ))}
+          </select>
+        </div>
+        <div className="form-field">
+          <label htmlFor="mode-filter">Teaching mode</label>
+          <select id="mode-filter" className="form-input" value={filters.teaching_mode}
+            onChange={(event) => setFilter("teaching_mode", event.target.value)}>
+            <option value="">Any mode</option>
+            {TEACHING_MODE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
+        </div>
+        <button type="submit" className="btn btn-primary">Search</button>
+        {hasActiveFilters && (
+          <button type="button" className="btn btn-secondary" onClick={clearFilters}>Clear filters</button>
+        )}
+      </form>
+
+      {state.status === "loading" && <LoadingState message="Loading tutors..." />}
+
+      {state.status === "error" && (
+        <ErrorState title="Could not load tutors" message={state.message} onRetry={reload} />
       )}
 
-      {status === "loading" && <LoadingState message="Loading tutors..." />}
-
-      {status === "error" && (
-        <ErrorState
-          title="Could not load tutors"
-          message={errorMessage}
-          onRetry={() => setReloadCount((count) => count + 1)}
-        />
+      {state.status === "success" && state.data.total === 0 && (
+        hasActiveFilters ? (
+          <EmptyState title="No matching tutors" message="Try a different search or remove some filters." />
+        ) : (
+          <EmptyState title="No tutor profiles yet" message="There are no tutors to show yet." />
+        )
       )}
 
-      {status === "success" && tutors.length === 0 && (
-        <EmptyState
-          title="No tutor profiles yet"
-          message="There are no tutors to show. Be the first to create a profile."
-          actionLabel="Create Tutor Profile"
-          actionTo="/tutors/new"
-        />
-      )}
-
-      {status === "success" && tutors.length > 0 && (
+      {state.status === "success" && state.data.total > 0 && (
         <>
-          <div className="toolbar">
-            <div className="form-field">
-              <label htmlFor="tutor-search">Search</label>
-              <input
-                id="tutor-search"
-                type="search"
-                className="form-input"
-                placeholder="Name, subject, department or headline"
-                value={searchText}
-                onChange={(event) => setSearchText(event.target.value)}
-              />
-            </div>
-
-            <div className="form-field">
-              <label htmlFor="subject-filter">Subject</label>
-              <select
-                id="subject-filter"
-                className="form-input"
-                value={selectedSubject}
-                onChange={(event) => setSelectedSubject(event.target.value)}
-              >
-                <option value="">All subjects</option>
-                {subjects.map((subject) => (
-                  <option key={subject} value={subject}>
-                    {subject}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {hasActiveFilters && (
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={clearFilters}
-              >
-                Clear filters
-              </button>
-            )}
-          </div>
-
           <p className="results-count" aria-live="polite">
-            Showing {filteredTutors.length} of {tutors.length} tutors
+            {state.data.total} tutor{state.data.total === 1 ? "" : "s"} found
           </p>
-
-          {filteredTutors.length === 0 ? (
-            <EmptyState
-              title="No matching tutors"
-              message="Try a different search or choose another subject."
-            />
-          ) : (
-            <div className="tutor-grid">
-              {filteredTutors.map((tutor) => (
-                <TutorCard key={tutor.id} tutor={tutor} />
-              ))}
-            </div>
+          <div className="tutor-grid">
+            {state.data.tutors.map((tutor) => (
+              <TutorCard key={tutor.id} tutor={tutor} />
+            ))}
+          </div>
+          {state.data.total > PAGE_SIZE && (
+            <Pagination page={page} pageSize={PAGE_SIZE} total={state.data.total}
+              onPageChange={(value) => setFilter("page", String(value))} />
           )}
         </>
       )}

@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
 import EmptyState from "../components/EmptyState";
 import ErrorState from "../components/ErrorState";
 import LoadingState from "../components/LoadingState";
+import { useToast } from "../components/Toast";
 import TutorForm from "../components/TutorForm";
 import { ApiError } from "../services/apiClient";
 import { uploadProfileImage } from "../services/imageService";
@@ -16,6 +18,8 @@ type LoadStatus = "loading" | "success" | "error" | "not-found";
 function EditTutorPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const toast = useToast();
 
   const [tutor, setTutor] = useState<Tutor | null>(null);
   const [status, setStatus] = useState<LoadStatus>("loading");
@@ -27,15 +31,15 @@ function EditTutorPage() {
 
   // Load the existing tutor so the form can be pre-filled.
   useEffect(() => {
-    if (id === undefined) {
-      setErrorMessage("No tutor id was found in the address.");
-      setStatus("error");
+    const tutorId = Number(id);
+    if (!Number.isInteger(tutorId) || tutorId < 1) {
+      setStatus("not-found");
       return;
     }
 
     let ignore = false;
 
-    async function loadTutor(tutorId: string) {
+    async function loadTutor(tutorId: number) {
       setStatus("loading");
       setErrorMessage("");
 
@@ -57,7 +61,7 @@ function EditTutorPage() {
       }
     }
 
-    loadTutor(id);
+    loadTutor(tutorId);
 
     return () => {
       ignore = true;
@@ -86,9 +90,8 @@ function EditTutorPage() {
         profile_image_url: profileImageUrl,
       });
 
-      navigate(`/tutors/${encodeURIComponent(String(updatedTutor.id))}`, {
-        state: { successMessage: "Tutor profile updated successfully." },
-      });
+      toast.success("Tutor profile updated successfully.");
+      navigate(`/tutors/${updatedTutor.id}`);
     } catch (error) {
       setSubmitError(getErrorMessage(error));
       setIsSubmitting(false);
@@ -98,41 +101,56 @@ function EditTutorPage() {
 
   if (status === "loading") {
     return (
-      <main className="container page form-page">
+      <div className="form-page">
         <LoadingState message="Loading tutor profile..." />
-      </main>
+      </div>
     );
   }
 
   if (status === "not-found") {
     return (
-      <main className="container page form-page">
+      <div className="form-page">
         <EmptyState
+          headingLevel="h1"
           title="Tutor not found"
           message="This tutor profile does not exist, so it cannot be edited."
           actionLabel="Back to all tutors"
           actionTo="/tutors"
         />
-      </main>
+      </div>
     );
   }
 
   if (status === "error" || tutor === null) {
     return (
-      <main className="container page form-page">
+      <div className="form-page">
         <ErrorState
           title="Could not load this tutor"
           message={errorMessage || "The tutor profile could not be loaded."}
           onRetry={() => setReloadCount((count) => count + 1)}
         />
-      </main>
+      </div>
     );
   }
 
-  const detailsPath = `/tutors/${encodeURIComponent(String(tutor.id))}`;
+  const detailsPath = `/tutors/${tutor.id}`;
+
+  // Only the owner or an administrator may edit (the backend enforces this too).
+  if (user === null || (user.id !== tutor.user_id && user.role !== "admin")) {
+    return (
+      <div className="form-page">
+        <EmptyState
+          title="You cannot edit this profile"
+          message="Only the owner of a tutor profile (or an administrator) can edit it."
+          actionLabel="Back to the profile"
+          actionTo={detailsPath}
+        />
+      </div>
+    );
+  }
 
   return (
-    <main className="container page form-page">
+    <div className="form-page">
       <Link to={detailsPath} className="back-link">
         &larr; Back to profile
       </Link>
@@ -151,7 +169,7 @@ function EditTutorPage() {
         cancelTo={detailsPath}
         onSubmit={handleSubmit}
       />
-    </main>
+    </div>
   );
 }
 

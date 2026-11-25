@@ -1,5 +1,4 @@
-
-import { ApiError, apiDelete, apiGet, apiPost, apiPut } from "./apiClient";
+import { ApiError, apiDelete, apiGet, apiGetWithTotal, apiPost, apiPut, toQuery } from "./apiClient";
 import {
   isDepartment,
   isTeachingMode,
@@ -8,7 +7,7 @@ import {
 import type { Tutor, TutorFormData, TutorId } from "../types/tutor";
 
 // Backend path for the tutor resource. The base URL comes from apiClient.
-const TUTORS_PATH = "/tutors";
+const TUTORS_PATH = "/api/tutors";
 
 const INVALID_DATA_MESSAGE =
   "The server returned data in an unexpected format.";
@@ -33,9 +32,11 @@ function isTutor(value: unknown): value is Tutor {
   }
 
   return (
-    (typeof value.id === "number" || typeof value.id === "string") &&
+    typeof value.id === "number" &&
+    (value.user_id === null || typeof value.user_id === "number") &&
     typeof value.full_name === "string" &&
-    typeof value.student_id === "string" &&
+    // The Student ID is private: only the owner and administrators receive it.
+    (value.student_id === undefined || typeof value.student_id === "string") &&
     isDepartment(value.department) &&
     typeof value.semester === "number" &&
     typeof value.cgpa === "number" &&
@@ -77,32 +78,61 @@ function parseTutorList(data: unknown): Tutor[] {
   return tutors;
 }
 
-// Builds "/tutors/<id>", encoding the id so special characters are safe.
+// Builds "/api/tutors/<id>", encoding the id so special characters are safe.
 function tutorPath(id: TutorId): string {
   return `${TUTORS_PATH}/${encodeURIComponent(String(id))}`;
 }
 
 // ---- The five CRUD operations ----
 
-// READ (list): GET /tutors
-export async function getTutors(): Promise<Tutor[]> {
-  const data = await apiGet(TUTORS_PATH);
-  return parseTutorList(data);
+export interface TutorSearch {
+  q?: string;
+  subject?: string;
+  department?: string;
+  teaching_mode?: string;
+  limit?: number;
+  offset?: number;
 }
 
-// READ (single): GET /tutors/{id}
+// READ (list): GET /api/tutors?q=&subject=&... (filters run on the server)
+export async function getTutors(search: TutorSearch = {}): Promise<Tutor[]> {
+  return (await searchTutors(search)).tutors;
+}
+
+// Same as getTutors, plus the total number of matches for pagination.
+export async function searchTutors(
+  search: TutorSearch = {}
+): Promise<{ tutors: Tutor[]; total: number }> {
+  const { data, total } = await apiGetWithTotal(`${TUTORS_PATH}${toQuery({ ...search })}`);
+  const tutors = parseTutorList(data);
+  return { tutors, total: total ?? tutors.length };
+}
+
+// READ (own profile): GET /api/tutors/me. Returns null when none exists yet.
+export async function getMyTutorProfile(): Promise<Tutor | null> {
+  try {
+    return parseTutor(await apiGet(`${TUTORS_PATH}/me`));
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+// READ (single): GET /api/tutors/{id}
 export async function getTutorById(id: TutorId): Promise<Tutor> {
   const data = await apiGet(tutorPath(id));
   return parseTutor(data);
 }
 
-// CREATE: POST /tutors
+// CREATE: POST /api/tutors
 export async function createTutor(formData: TutorFormData): Promise<Tutor> {
   const data = await apiPost(TUTORS_PATH, formData);
   return parseTutor(data);
 }
 
-// UPDATE: PUT /tutors/{id}
+// UPDATE: PUT /api/tutors/{id}
 export async function updateTutor(
   id: TutorId,
   formData: TutorFormData
@@ -111,7 +141,7 @@ export async function updateTutor(
   return parseTutor(data);
 }
 
-// DELETE: DELETE /tutors/{id}
+// DELETE: DELETE /api/tutors/{id}
 export async function deleteTutor(id: TutorId): Promise<void> {
   await apiDelete(tutorPath(id));
 }
