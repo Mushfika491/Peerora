@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -23,6 +23,10 @@ function ConfirmDialog({
 }: ConfirmDialogProps) {
   // A reference to the real <dialog> element in the browser's DOM.
   const dialogRef = useRef<HTMLDialogElement>(null);
+  // Unique ids, so several dialogs on one page never share an aria target.
+  const baseId = useId();
+  const titleId = `${baseId}-title`;
+  const messageId = `${baseId}-message`;
 
   // Open or close the native dialog whenever "isOpen" changes.
   useEffect(() => {
@@ -59,14 +63,14 @@ function ConfirmDialog({
     <dialog
       ref={dialogRef}
       className="confirm-dialog"
-      aria-labelledby="confirm-dialog-title"
-      aria-describedby="confirm-dialog-message"
+      aria-labelledby={titleId}
+      aria-describedby={messageId}
       onCancel={handleCancelEvent}
       onClick={handleBackdropClick}
     >
       <div className="confirm-dialog-content">
-        <h2 id="confirm-dialog-title">{title}</h2>
-        <p id="confirm-dialog-message">{message}</p>
+        <h2 id={titleId}>{title}</h2>
+        <p id={messageId}>{message}</p>
 
         <div className="confirm-dialog-actions">
           <button

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ChangeEvent } from "react";
-import { IMAGE_ACCEPT_ATTRIBUTE, validateProfileImage } from "../utils/validation";
+import { IMAGE_ACCEPT_ATTRIBUTE, MAX_IMAGE_SIZE_MB, validateProfileImage } from "../utils/validation";
 import FormField from "./FormField";
 
 interface ImageUploadProps {
@@ -31,7 +31,7 @@ function ImageUpload({
   existingUrl,
   onFileChange,
   onRemoveExisting,
-  hint = "JPG, JPEG, PNG or WebP. Maximum size 2 MB.",
+  hint = `JPG, JPEG, PNG or WebP. Maximum size ${MAX_IMAGE_SIZE_MB} MB.`,
   error,
 }: ImageUploadProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);

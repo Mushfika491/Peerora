@@ -31,7 +31,10 @@ export const ALLOWED_IMAGE_TYPES: readonly string[] = [
   "image/png",
   "image/webp",
 ];
-export const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024; // 2 MB
+// The single source of the profile picture size limit. Every hint and error
+// message is built from MAX_IMAGE_SIZE_MB, so they always agree.
+export const MAX_IMAGE_SIZE_MB = 10;
+export const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024; // 10 MB = 10,485,760 bytes
 // Value for the "accept" attribute of the file input (Group 2).
 export const IMAGE_ACCEPT_ATTRIBUTE =
   ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp";
@@ -207,7 +210,7 @@ export function validateProfileImage(file: File): string | undefined {
     return "Profile picture file is empty.";
   }
   if (file.size > MAX_IMAGE_SIZE_BYTES) {
-    return "Profile picture must be 2 MB or smaller.";
+    return `Profile picture must be ${MAX_IMAGE_SIZE_MB} MB or smaller.`;
   }
   return undefined;
 }
@@ -313,7 +316,7 @@ export function toTutorFormData(
 export function tutorToFormValues(tutor: Tutor): TutorFormValues {
   return {
     full_name: tutor.full_name,
-    student_id: tutor.student_id,
+    student_id: tutor.student_id ?? "",
     department: tutor.department,
     semester: String(tutor.semester),
     cgpa: tutor.cgpa.toFixed(2),

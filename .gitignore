@@ -9,6 +9,23 @@ frontend/dist/
 
 # Env / tooling
 .env
+# Any copy or editor backup of an env file (e.g. nano's .env.save), except the examples
+.env.*
+!.env.example
+*.save
+*.save.*
 .vercel/
 .vscode/*
 !.vscode/extensions.json
+
+# Local development database and test emails (may contain reset links)
+backend/peerora-dev.db
+backend/dev-outbox/
+
+# Local MCP configuration
+.mcp.json
+
+# Generated test coverage data
+.coverage
+.coverage.*
+htmlcov/

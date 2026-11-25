@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
 import ConfirmDialog from "../components/ConfirmDialog";
 import EmptyState from "../components/EmptyState";
 import ErrorState from "../components/ErrorState";
 import LoadingState from "../components/LoadingState";
+import { useToast } from "../components/Toast";
 import { ApiError } from "../services/apiClient";
 import { deleteTutor, getTutorById } from "../services/tutorService";
 import type { Tutor } from "../types/tutor";
@@ -16,7 +18,7 @@ import {
   getTeachingModeLabel,
   getTutoringExperienceLabel,
 } from "../utils/format";
-import { getErrorMessage, getSuccessMessage } from "../utils/messages";
+import { getErrorMessage } from "../utils/messages";
 
 type LoadStatus = "loading" | "success" | "error" | "not-found";
 
@@ -24,8 +26,8 @@ function TutorDetailsPage() {
   // "id" comes from the URL /tutors/:id
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
-  const successMessage = getSuccessMessage(location.state);
+  const { user } = useAuth();
+  const toast = useToast();
 
   const [tutor, setTutor] = useState<Tutor | null>(null);
   const [status, setStatus] = useState<LoadStatus>("loading");
@@ -38,15 +40,15 @@ function TutorDetailsPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (id === undefined) {
-      setErrorMessage("No tutor id was found in the address.");
-      setStatus("error");
+    const tutorId = Number(id);
+    if (!Number.isInteger(tutorId) || tutorId < 1) {
+      setStatus("not-found");
       return;
     }
 
     let ignore = false;
 
-    async function loadTutor(tutorId: string) {
+    async function loadTutor(tutorId: number) {
       setStatus("loading");
       setErrorMessage("");
       setImageFailed(false);
@@ -69,7 +71,7 @@ function TutorDetailsPage() {
       }
     }
 
-    loadTutor(id);
+    loadTutor(tutorId);
 
     return () => {
       ignore = true;
@@ -86,9 +88,8 @@ function TutorDetailsPage() {
 
     try {
       await deleteTutor(tutor.id);
-      navigate("/tutors", {
-        state: { successMessage: "Tutor profile deleted successfully." },
-      });
+      toast.success("Tutor profile deleted successfully.");
+      navigate("/tutors");
     } catch (error) {
       setDeleteError(getErrorMessage(error));
       setIsDeleting(false);
@@ -108,6 +109,7 @@ function TutorDetailsPage() {
     return (
       <main className="container page">
         <EmptyState
+          headingLevel="h1"
           title="Tutor not found"
           message="This tutor profile does not exist. It may have been deleted."
           actionLabel="Back to all tutors"
@@ -130,19 +132,15 @@ function TutorDetailsPage() {
   }
 
   const showImage = tutor.profile_image_url !== null && !imageFailed;
-  const tutorPath = `/tutors/${encodeURIComponent(String(tutor.id))}`;
+  const tutorPath = `/tutors/${tutor.id}`;
+  // Owner or administrator. Only used to show the buttons; the backend checks again.
+  const canManage = user !== null && (user.id === tutor.user_id || user.role === "admin");
 
   return (
     <main className="container page">
       <Link to="/tutors" className="back-link">
         &larr; Back to all tutors
       </Link>
-
-      {successMessage !== null && (
-        <div className="alert alert-success" role="status">
-          {successMessage}
-        </div>
-      )}
 
       {deleteError !== null && (
         <div className="alert alert-error" role="alert">
@@ -188,8 +186,12 @@ function TutorDetailsPage() {
 
         <h2>Academic Information</h2>
         <dl className="tutor-meta">
-          <dt>University Student ID</dt>
-          <dd>{tutor.student_id}</dd>
+          {tutor.student_id !== undefined && (
+            <>
+              <dt>University Student ID</dt>
+              <dd>{tutor.student_id} <span className="muted small">(private)</span></dd>
+            </>
+          )}
           <dt>Department</dt>
           <dd>{tutor.department}</dd>
           <dt>Current semester</dt>
@@ -213,6 +215,7 @@ function TutorDetailsPage() {
           {formatDate(tutor.updated_at)}
         </p>
 
+        {canManage && (
         <div className="details-actions">
           <Link to={`${tutorPath}/edit`} className="btn btn-primary">
             Edit profile
@@ -225,6 +228,7 @@ function TutorDetailsPage() {
             Delete profile
           </button>
         </div>
+        )}
       </article>
 
       <ConfirmDialog

@@ -1,7 +1,9 @@
 """Pydantic schemas: the shape and validation rules of requests and responses.
 
 TutorIn  - what the frontend sends for POST and PUT (validated here).
-TutorOut - what the API returns (numbers are sent as JSON numbers).
+TutorPublicOut - what anyone may see (no Student ID).
+TutorOut - the full profile for its owner and administrators.
+Numbers are sent as JSON numbers.
 The rules mirror frontend/src/utils/validation.ts.
 """
 
@@ -103,13 +105,16 @@ class TutorIn(BaseModel):
         return value
 
 
-class TutorOut(BaseModel):
+class TutorPublicOut(BaseModel):
+    """What anyone may see. The University Student ID is private, so it is
+    only included in TutorOut (for the profile owner and administrators)."""
+
     # from_attributes lets Pydantic read a SQLAlchemy Tutor object directly.
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    user_id: int | None
     full_name: str
-    student_id: str
     department: str
     semester: int
     cgpa: Decimal
@@ -132,3 +137,9 @@ class TutorOut(BaseModel):
     @field_serializer("hourly_rate")
     def hourly_rate_as_number(self, value: Decimal | None) -> float | None:
         return None if value is None else float(value)
+
+
+class TutorOut(TutorPublicOut):
+    """The full profile, returned only to its owner and to administrators."""
+
+    student_id: str
